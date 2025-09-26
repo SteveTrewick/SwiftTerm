@@ -86,7 +86,7 @@ struct ArgumentParser {
             return .list
         }
 
-        guard let path else {
+        guard let path = path else {
             return nil
         }
 
@@ -155,7 +155,7 @@ func listSerialPorts() -> [(path: String, name: String?)] {
             name = cfName
         }
 
-        if let path {
+        if let path = path {
             result.append((path, name))
         }
 
@@ -400,7 +400,7 @@ func main() {
             print("No serial ports found")
         } else {
             for (path, name) in ports {
-                if let name {
+                if let name = name {
                     print("\(path) - \(name)")
                 } else {
                     print(path)
