@@ -86,7 +86,7 @@ struct ArgumentParser {
             return .list
         }
 
-        guard let path else {
+        guard let path = path else {
             return nil
         }
 
@@ -132,7 +132,7 @@ func listSerialPorts() -> [(path: String, name: String?)] {
     matchingDict[kIOSerialBSDTypeKey] = kIOSerialBSDAllTypes
 
     var iterator: io_iterator_t = 0
-    let kernResult = IOServiceGetMatchingServices(kIOMainPortDefault, matchingDict, &iterator)
+    let kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, matchingDict, &iterator)
     guard kernResult == KERN_SUCCESS else {
         return []
     }
@@ -155,7 +155,7 @@ func listSerialPorts() -> [(path: String, name: String?)] {
             name = cfName
         }
 
-        if let path {
+        if let path = path {
             result.append((path, name))
         }
 
@@ -193,7 +193,7 @@ func speedConstant(for baud: Int) -> speed_t? {
 func configurePort(fd: Int32, configuration: SerialConfiguration) throws {
     var options = termios()
     if tcgetattr(fd, &options) == -1 {
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? POSIXError(.ENOTTY))
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .ENOTTY)
     }
 
     cfmakeraw(&options)
@@ -252,15 +252,15 @@ func configurePort(fd: Int32, configuration: SerialConfiguration) throws {
     }
 
     if tcsetattr(fd, TCSANOW, &options) == -1 {
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? POSIXError(.ENOTTY))
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .ENOTTY)
     }
 
     if tcflush(fd, TCIOFLUSH) == -1 {
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? POSIXError(.EIO))
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
     }
 
     if ioctl(fd, TIOCEXCL) == -1 {
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? POSIXError(.EACCES))
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EACCES)
     }
 
     let currentFlags = fcntl(fd, F_GETFL)
@@ -272,7 +272,7 @@ func configurePort(fd: Int32, configuration: SerialConfiguration) throws {
 func openSerialPort(configuration: SerialConfiguration) throws -> Int32 {
     let fd = open(configuration.path, O_RDWR | O_NOCTTY | O_NONBLOCK)
     if fd == -1 {
-        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? POSIXError(.EIO))
+        throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
     }
 
     do {
@@ -377,7 +377,7 @@ func runTerminal(with configuration: SerialConfiguration) {
 
         dispatchMain()
     } catch let posixError as POSIXError {
-        let code = posixError.errorCode.rawValue
+        let code = posixError.errorCode
         fputs("Error: POSIX \(code) - \(posixError.localizedDescription)\n", stderr)
         exit(EXIT_FAILURE)
     } catch {
@@ -400,7 +400,7 @@ func main() {
             print("No serial ports found")
         } else {
             for (path, name) in ports {
-                if let name {
+                if let name = name {
                     print("\(path) - \(name)")
                 } else {
                     print(path)
