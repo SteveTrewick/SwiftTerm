@@ -377,7 +377,7 @@ func runTerminal(with configuration: SerialConfiguration) {
 
         dispatchMain()
     } catch let posixError as POSIXError {
-        let code = posixError.errorCode.rawValue
+        let code = posixError.errorCode
         fputs("Error: POSIX \(code) - \(posixError.localizedDescription)\n", stderr)
         exit(EXIT_FAILURE)
     } catch {
